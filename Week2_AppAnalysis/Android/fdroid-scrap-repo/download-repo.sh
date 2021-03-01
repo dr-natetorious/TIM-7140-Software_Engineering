@@ -9,7 +9,8 @@ apks_releases= `cat $tmp_page | grep '.apk"'|cut -d '"' -f 2 | grep -v F-Droid.a
 
 # Upload each milestone APK
 for apk in $apks_releases; do
-  apk_file=`basename $apk`
+  apk_file="/tmp/`basename $apk`"
   curl -o $apk_file $apk
   aws s3 cp $apk_file s3://$bucket/apk/$apk_file
+  rm $apk_file
 done
