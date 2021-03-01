@@ -1,20 +1,27 @@
+import os.path
 from infra.datalake import DataLakeLayer
 from aws_cdk import (
     core,
+    aws_ecr_assets as ecr,
     aws_iam as iam,
     aws_s3 as s3,
     aws_ec2 as ec2,
     aws_efs as efs
 )
 
+root_dir = os.path.join(os.path.dirname(__file__),'..')
+
 class ComputeLayer(core.Construct):
   """
-  Configure the datalake layer
+  Configure the compute layer
   """
   def __init__(self, scope: core.Construct, id: str,datalake:DataLakeLayer, **kwargs) -> None:
     super().__init__(scope, id, **kwargs)
 
     self.add_devbox(datalake=datalake)
+    ecr.DockerImageAsset(self,'fdroid-scrape',
+      directory=os.path.join(root_dir,'fdroid-scrape'),
+      repository_name='fdroid-scrape')
 
   def add_devbox(self, datalake:DataLakeLayer):
     """
@@ -32,12 +39,18 @@ class ComputeLayer(core.Construct):
     self.devbox.add_user_data(
       "yum check-update -y",
       "yum upgrade -y",
-      "yum install -y amazon-efs-utils nfs-utils"
+      "yum install -y amazon-efs-utils nfs-utils docker",
+      "service docker start",
       "file_system_id_1=" + datalake.efs.file_system_id,
       "efs_mount_point_1=/mnt/efs/",
       "mkdir -p \"${efs_mount_point_1}\"",
       "test -f \"/sbin/mount.efs\" && echo \"${file_system_id_1}:/ ${efs_mount_point_1} efs defaults,_netdev\" >> /etc/fstab || " + "echo \"${file_system_id_1}.efs." + core.Stack.of(self).region + ".amazonaws.com:/ ${efs_mount_point_1} nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport,_netdev 0 0\" >> /etc/fstab", "mount -a -t efs,nfs4 defaults"
     )
 
-    #self.devbox.role.add_managed_policy(
-    #  iam.ManagedPolicy.from_aws_managed_policy_name('AmazonSSMManagedInstanceCore'))
+    for policy in [
+      'AmazonSSMManagedInstanceCore',
+      'AmazonS3FullAccess',
+      'AWSCodeCommitFullAccess',
+      'AmazonCodeGuruReviewerFullAccess' ]:
+      self.devbox.role.add_managed_policy(
+        iam.ManagedPolicy.from_aws_managed_policy_name(policy))
