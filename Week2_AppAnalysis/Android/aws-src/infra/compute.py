@@ -48,7 +48,9 @@ class ComputeLayer(core.Construct):
       timeout= core.Duration.minutes(15),
       memory_size=512,
       tracing= lambda_.Tracing.ACTIVE, 
-      reserved_concurrent_executions= 3,
+      # Note: This throttles the AWS S3 batch job.
+      # Downloading too fast will cause f-droid to disconnect the crawler
+      reserved_concurrent_executions= 2,
       filesystem= lambda_.FileSystem.from_efs_access_point(
         ap= self.datalake.efs.add_access_point(
           'fdroid-scrape-repo',
