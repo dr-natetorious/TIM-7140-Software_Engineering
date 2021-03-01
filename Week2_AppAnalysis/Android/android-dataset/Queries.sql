@@ -40,3 +40,11 @@ on
 select app.appId, app.name, app.auto_name, app.categories, git.commit_hash, git.author, git.email, git.time, git.summary
 from AppData as app
 left join GitHistory as git on app.appId = git.appId
+
+/*
+    Permissions for each version
+*/
+select p.*, ci.Commit_ID, ci.Author_Email, ci.Commit_Date, ci.Commit_Message, ci.commit_order
+from Permission p
+left join android_Manifest_permission_join ampj on p.permissionid = ampj.Permission_ID
+left join android_Manifest_CommitInfo ci on ampj.commit_id = ci.commit_id
