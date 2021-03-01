@@ -40,7 +40,7 @@ class ComputeLayer(core.Construct):
       directory=os.path.join(root_dir,'fdroid-scrape-repo'),
       repository_name='fdroid-scrape-repo')
 
-    self.scrape_repo = lambda_.DockerImageFunction(self,'ContainerFunction',
+    self.scrape_repo = lambda_.DockerImageFunction(self,'fdroid-scrape-repo',
       code = lambda_.DockerImageCode.from_ecr(
         repository=repo.repository,
         tag=repo.image_uri.split(':')[-1]), # lambda_.DockerImageCode.from_image_asset(directory=os.path.join(src_root_dir,directory)),
@@ -48,7 +48,21 @@ class ComputeLayer(core.Construct):
       timeout= core.Duration.minutes(15),
       memory_size=512,
       tracing= lambda_.Tracing.ACTIVE,
+      filesystem= lambda_.FileSystem.from_efs_access_point(
+        ap= self.datalake.efs.add_access_point('fdroid-scrape-repo',path='/'),
+        mount_path='/mnt/efs'
+      ),
+      environment={
+        'EFS_MOUNT':'/mnt/efs'
+      },
       vpc= self.datalake.vpc)
+
+    for name in [
+      'AmazonElasticFileSystemClientFullAccess',
+      'AWSXrayWriteOnlyAccess',
+      'AmazonS3FullAccess' ]:
+      self.scrape_repo.role.add_managed_policy(
+        iam.ManagedPolicy.from_aws_managed_policy_name(name))
 
   def add_devbox(self):
     """
