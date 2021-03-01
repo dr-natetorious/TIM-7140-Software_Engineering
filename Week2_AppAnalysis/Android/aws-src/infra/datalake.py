@@ -19,8 +19,19 @@ class DataLakeLayer(core.Construct):
     self.product_descr_bucket = s3.Bucket(self,'AndroidProducts',
       removal_policy= core.RemovalPolicy.DESTROY)
 
+    efs_sg = ec2.SecurityGroup(self,'EfsGroup',
+      vpc=self.vpc,
+      allow_all_outbound=True,
+      description='Security Group for ApkStore EFS')
+
+    efs_sg.add_ingress_rule(
+      peer= ec2.Peer.any_ipv4(),
+      connection=ec2.Port.all_traffic(),
+      description='Allow any traffic')
+
     self.efs = efs.FileSystem(self,'ApkStore',
       vpc=self.vpc,
+      security_group= efs_sg,
       lifecycle_policy= efs.LifecyclePolicy.AFTER_14_DAYS,
       performance_mode= efs.PerformanceMode.GENERAL_PURPOSE)
 

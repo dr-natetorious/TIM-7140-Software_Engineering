@@ -47,9 +47,13 @@ class ComputeLayer(core.Construct):
       description='Python container lambda function for '+repo.repository.repository_name,
       timeout= core.Duration.minutes(15),
       memory_size=512,
-      tracing= lambda_.Tracing.ACTIVE,
+      tracing= lambda_.Tracing.ACTIVE, 
+      reserved_concurrent_executions= 3,
       filesystem= lambda_.FileSystem.from_efs_access_point(
-        ap= self.datalake.efs.add_access_point('fdroid-scrape-repo',path='/'),
+        ap= self.datalake.efs.add_access_point(
+          'fdroid-scrape-repo',
+          path='/fdroid-scrape-repo',
+          create_acl=efs.Acl(owner_gid="0", owner_uid="0", permissions="777")),
         mount_path='/mnt/efs'
       ),
       environment={
@@ -76,6 +80,9 @@ class ComputeLayer(core.Construct):
       ),
       vpc=self.datalake.vpc,
       allow_all_outbound=True)
+
+    if self.datalake.efs.file_system_id == None:
+      raise AssertionError('No filesystem id present')
 
     self.devbox.add_user_data(
       "yum check-update -y",
