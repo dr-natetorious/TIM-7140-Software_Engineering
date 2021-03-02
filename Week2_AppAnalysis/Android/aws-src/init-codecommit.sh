@@ -1,0 +1,10 @@
+#!/bin/bash
+
+ls | shuff | head -n 1000 > random.subset
+for name in `cat random.subset`; do
+  aws codecommit --region us-east-2 create-repository --repository-name $name
+done
+
+for name in `cat random.subset`; do
+  aws codeguru-reviewer --region us-east-2 associate-repository --repository "CodeCommit={Name=${name}}"
+done
