@@ -1,10 +1,11 @@
 #!/usr/bin/python
+from datetime import datetime
 from json import dumps, loads
 from os import environ, path, listdir, system
 import pathlib
 import boto3
 import requests
-from aws_xray_sdk.core import xray_recorder
+#from aws_xray_sdk.core import xray_recorder
 
 """
 Initialize the function.
@@ -15,14 +16,14 @@ cg = boto3.client('codeguru-reviewer')
 def cache_associations() -> dict:
   cache = {}
 
-  response =cg.list_repository_associations(MaxResults=1000)
+  response =cg.list_repository_associations(MaxResults=100)
   for item in response['RepositoryAssociationSummaries']:
     name = item['Name']
     cache[name] = item
 
   while('NextToken' in response):
     response = cg.list_repository_associations(
-      MaxResults=1000,
+      MaxResults=100,
       NextToken=response['NextToken'])
 
     for item in response['RepositoryAssociationSummaries']:
@@ -51,14 +52,17 @@ def process_event(e:dict):
     branches.extend(response['branches'])
 
   # Process each branch...
+  timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
   for branch in branches:
     response = cg.create_code_review(
-      Name='Analyze',
+      Name='Analyze-{}-{}'.format(branch,timestamp),
       RepositoryAssociationArn= association['AssociationArn'],
       Type={
-        "RepositoryAnalysis":"RepositoryAnalysis",
-        "RepositoryHead":"RepositoryHead",
-        "BranchName":branch
+        "RepositoryAnalysis":{
+          "RepositoryHead":{
+            "BranchName":branch
+          }
+        }
       })
 
     print(response)
@@ -75,3 +79,9 @@ def handle_event(request, context):
 
     e = loads(body)
     process_event(e)
+
+if __name__ == "__main__":
+  base_path = path.dirname(__file__)
+  with open(path.join(base_path, 'example-payload.json'),'r', encoding='utf8') as f:
+    request = loads(f.read())
+    handle_event(request, None)
