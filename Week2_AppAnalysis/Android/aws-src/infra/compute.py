@@ -46,11 +46,11 @@ class ComputeLayer(core.Construct):
         tag=repo.image_uri.split(':')[-1]), # lambda_.DockerImageCode.from_image_asset(directory=os.path.join(src_root_dir,directory)),
       description='Python container lambda function for '+repo.repository.repository_name,
       timeout= core.Duration.minutes(15),
-      memory_size=512,
+      memory_size=4096,
       tracing= lambda_.Tracing.ACTIVE, 
       # Note: This throttles the AWS S3 batch job.
       # Downloading too fast will cause f-droid to disconnect the crawler
-      reserved_concurrent_executions= 2,
+      reserved_concurrent_executions= 5,
       filesystem= lambda_.FileSystem.from_efs_access_point(
         ap= self.datalake.efs.add_access_point(
           'fdroid-scrape-repo',
@@ -66,7 +66,8 @@ class ComputeLayer(core.Construct):
     for name in [
       'AmazonElasticFileSystemClientFullAccess',
       'AWSXrayWriteOnlyAccess',
-      'AmazonS3FullAccess' ]:
+      'AmazonS3FullAccess',
+      'AWSCodeCommitFullAccess' ]:
       self.scrape_repo.role.add_managed_policy(
         iam.ManagedPolicy.from_aws_managed_policy_name(name))
 

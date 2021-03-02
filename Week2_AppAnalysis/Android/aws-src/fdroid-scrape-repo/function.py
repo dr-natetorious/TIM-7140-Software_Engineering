@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from json import dumps
-from os import environ, path, listdir
+from os import environ, path, listdir, system
 import pathlib
 import boto3
 import requests
@@ -68,12 +68,13 @@ def download_refs(project_htm):
       elif href.endswith('.apk'):
         download_apk(project_htm, href)
       elif "Source" in text:
-        print("Source: "+href)
+        #print("Source: "+href)
+        create_source_repo(project_htm, href)
 
 @xray_recorder.capture('Download-APK')
 def download_apk(project_htm, apk_href):
   xray_recorder.current_subsegment().put_metadata('apk_href',apk_href)
-  
+
   outdir = path.dirname(project_htm)
   outfile = path.join(outdir, path.basename(apk_href))
 
@@ -84,12 +85,26 @@ def download_apk(project_htm, apk_href):
   with open(outfile,'wb') as f:
     f.write(r.content)
 
+@xray_recorder.capture('Setup-Git')
+def create_source_repo(project_htm, source_uri):
+  """
+  Issue a Git clone command
+  """
+  outdir = path.join(path.dirname(project_htm),'code')
+  if not path.isdir(outdir):
+    command = "git clone -q --mirror \"{}\" \"{}\"".format(source_uri,outdir)
+    response = system(command)
+    
+    doc = xray_recorder.current_subsegment()
+    doc.put_metadata('command',command)
+    doc.put_metadata('result',response)
+
 def handle_event(request, handler):
   """
   Entry point for Lambda function
   """
   print(dumps(request))
-  print(listdir(base_outdir))
+  #print(listdir(base_outdir))
   bucket = request['tasks'][0]['s3BucketArn'].split(':')[-1]
   key = request['tasks'][0]['s3Key']
 
