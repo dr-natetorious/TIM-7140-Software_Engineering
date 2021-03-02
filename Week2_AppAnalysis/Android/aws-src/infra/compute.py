@@ -12,11 +12,55 @@ from aws_cdk import (
 
 root_dir = os.path.join(os.path.dirname(__file__),'..')
 
+class AnalyzerLambda(core.Construct):
+
+  @property
+  def datalake(self) -> DataLakeLayer:
+    return self.__datalake
+
+  def __init__(self,scope:core.Construct, id:str, datalake:DataLakeLayer, project_name:str, **kwargs) ->None:
+    super().__init__(scope,id,**kwargs)
+
+    self.__datalake = datalake
+    repo = ecr.DockerImageAsset(self,'Repo',
+      directory=os.path.join(root_dir, project_name),
+      repository_name=project_name)
+
+    self.scrape_repo = lambda_.DockerImageFunction(self,project_name+'-repo',
+      code = lambda_.DockerImageCode.from_ecr(
+        repository=repo.repository,
+        tag=repo.image_uri.split(':')[-1]), # lambda_.DockerImageCode.from_image_asset(directory=os.path.join(src_root_dir,directory)),
+      description='Python container lambda function for '+repo.repository.repository_name,
+      timeout= core.Duration.minutes(15),
+      memory_size=4096,
+      tracing= lambda_.Tracing.ACTIVE, 
+      # Note: This throttles the AWS S3 batch job.
+      # Downloading too fast will cause f-droid to disconnect the crawler
+      reserved_concurrent_executions= 5,
+      filesystem= lambda_.FileSystem.from_efs_access_point(
+        ap= self.datalake.efs.add_access_point(
+          project_name,
+          path='/'+project_name,
+          create_acl=efs.Acl(owner_gid="0", owner_uid="0", permissions="777")),
+        mount_path='/mnt/efs'
+      ),
+      environment={
+        'EFS_MOUNT':'/mnt/efs'
+      },
+      vpc= self.datalake.vpc)
+
+    for name in [
+      'AmazonElasticFileSystemClientFullAccess',
+      'AWSXrayWriteOnlyAccess',
+      'AmazonS3FullAccess',
+      'AWSCodeCommitFullAccess' ]:
+      self.scrape_repo.role.add_managed_policy(
+        iam.ManagedPolicy.from_aws_managed_policy_name(name))
+
 class ComputeLayer(core.Construct):
   """
   Configure the compute layer
   """
-
   @property
   def datalake(self) -> DataLakeLayer:
     return self.__datalake
@@ -26,7 +70,12 @@ class ComputeLayer(core.Construct):
 
     self.__datalake=datalake
     self.add_devbox()
-    self.add_repo_collector()
+    AnalyzerLambda(scope,'fdroid-scrape-repo',
+      project_name='fdroid-scrape-repo',
+      datalake=datalake)
+
+    #self.add_repo_collector()
+
 
     ecr.DockerImageAsset(self,'fdroid-scrape',
       directory=os.path.join(root_dir,'fdroid-scrape'),
