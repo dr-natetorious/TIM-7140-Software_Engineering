@@ -54,7 +54,8 @@ class AnalyzerLambda(core.Construct):
       'AmazonElasticFileSystemClientFullAccess',
       'AWSXrayWriteOnlyAccess',
       'AmazonS3FullAccess',
-      'AWSCodeCommitFullAccess' ]:
+      'AWSCodeCommitFullAccess',
+      'AmazonCodeGuruReviewerFullAccess' ]:
       self.function.role.add_managed_policy(
         iam.ManagedPolicy.from_aws_managed_policy_name(name))
 

@@ -5,7 +5,8 @@ from os import environ, path, listdir, system
 import pathlib
 import boto3
 import requests
-#from aws_xray_sdk.core import xray_recorder
+from time import sleep
+from aws_xray_sdk.core import xray_recorder
 
 """
 Initialize the function.
@@ -13,6 +14,7 @@ Initialize the function.
 cc = boto3.client('codecommit')
 cg = boto3.client('codeguru-reviewer')
 
+@xray_recorder.capture('cache_associations')
 def cache_associations() -> dict:
   cache = {}
 
@@ -34,8 +36,11 @@ def cache_associations() -> dict:
 
 associations = cache_associations()
 
+@xray_recorder.capture('process-event')
 def process_event(e:dict):
   repository_name = e['repository_name']
+  xray_recorder.current_subsegment().put_metadata('repository_name',repository_name)
+
   association = associations[repository_name]
   
   # Find all branches...
@@ -52,10 +57,11 @@ def process_event(e:dict):
     branches.extend(response['branches'])
 
   # Process each branch...
-  timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+  xray_recorder.current_subsegment().put_metadata('branches',str(branches))  
   for branch in branches:
+    timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
     response = cg.create_code_review(
-      Name='Analyze-{}-{}'.format(branch,timestamp),
+      Name='Analyze-{}'.format(timestamp),
       RepositoryAssociationArn= association['AssociationArn'],
       Type={
         "RepositoryAnalysis":{
@@ -65,7 +71,10 @@ def process_event(e:dict):
         }
       })
 
-    print(response)
+  print(dumps({
+    "repository_name": repository_name,
+    "branches": branches
+  }))
 
 # https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html
 def handle_event(request, context):
