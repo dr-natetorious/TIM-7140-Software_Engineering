@@ -1,6 +1,8 @@
 #!/usr/bin/python
+from models import CodeReview
 from datetime import datetime
 from json import dumps, loads
+from sanitizer import sanitize_code_review
 from os import environ, path, listdir, system
 import pathlib
 import boto3
@@ -8,86 +10,43 @@ import requests
 from time import sleep
 #from aws_xray_sdk.core import xray_recorder
 
-"""
-Initialize the function.
-"""
-reviewer = boto3.client('codeguru-reviewer')
-s3 = boto3.client('s3')
-bucket='droidanlyz-storagelayerandroidproducts4c17745e-1pwfyncc67j3e'
+s3 = boto3.resource('s3')
 
-def list_code_reviews():
+def process_file(json:dict):
+  code_review = CodeReview(json)
+  sanitize_code_review(code_review)
+
+  with open('scratch.json','w+') as f:
+    f.write(dumps(code_review.json, indent=True))
+
+def handle_event(request, handler):
   """
-  Find all code reviews
+  Entry point for Lambda function
   """
-  response = reviewer.list_code_reviews(
-    Type='RepositoryAnalysis',
-    States=['Completed'],
-    MaxResults=100)
+  print(dumps(request))
+  #print(listdir(base_outdir))
+  bucket = request['tasks'][0]['s3BucketArn'].split(':')[-1]
+  key = request['tasks'][0]['s3Key']
 
-  for summary in response['CodeReviewSummaries']:
-    process_code_findings(summary)
+  response = s3.Object(bucket_name=bucket, key=key).get()
+  content = response['Body'].read().decode("utf-8")
 
-  while 'NextToken' in response:
-    response = reviewer.list_code_reviews(
-      Type='RepositoryAnalysis',
-      States=['Completed'],
-      NextToken=response['NextToken'],
-      MaxResults=100)
+  process_file(loads(content))
 
-    for summary in response['CodeReviewSummaries']:
-      process_code_findings(summary)
-
-def process_code_findings(summary:dict):
-  """
-  Process this specific entry
-  """
-  review_arn = summary['CodeReviewArn']
-  metrics = summary['MetricsSummary']
-  if metrics['FindingsCount'] == 0:
-    print("No findings, skipping...")
-    return
-
-  description = reviewer.describe_code_review(CodeReviewArn=review_arn)['CodeReview']
-  repository = description['RepositoryName']
-  branch = description['SourceCodeType']['RepositoryHead']['BranchName']
-
-  document = {
-    "arn":review_arn,
-    "repository_name":repository,
-    "branch": branch,
-    "metrics": metrics
+  return {
+    "invocationSchemaVersion": "1.0",
+    "treatMissingKeysAs" : "TemporaryFailure",
+    "invocationId" : request['invocationId'],
+    "results": [
+      {
+        "taskId": request['tasks'][0]['taskId'],
+        "resultCode": "Succeeded",
+        "resultString": "[No errors]"
+      }
+    ]
   }
-  print(dumps(document))
-  attach_recommendations(document)
-  save_doc(document)
 
-def attach_recommendations(document:dict):
-  """
-  Download the 
-  """
-  recs = []
-  response = reviewer.list_recommendations(CodeReviewArn=document['arn'])
-  recs.extend(response['RecommendationSummaries'])
-
-  while 'NextToken' in response:
-    response = reviewer.list_recommendations(
-      CodeReviewArn=document['arn'],
-      NextToken=response['NextToken'])
-
-    recs.extend(response['RecommendationSummaries'])
-
-  document['recommendations'] = recs
-
-def save_doc(doc:dict):
-  """
-  Persists the results
-  """
-  response = s3.put_object(
-    Bucket=bucket,
-    Key='codeguru/raw/{}/{}.rec.json'.format(doc["repository_name"], doc["branch"]),
-    Body= dumps(doc).encode())
-
-  print(response)
-
-if __name__ == "__main__":
-  list_code_reviews()
+if __name__ == '__main__':
+  base_path = path.join(path.dirname(__file__),'Payloads')
+  with open(path.join(base_path,'r3.9.rec.json'),'r',encoding='utf8') as f:
+    process_file(loads(f.read()))
