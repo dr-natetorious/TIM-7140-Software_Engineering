@@ -81,6 +81,10 @@ class ComputeLayer(core.Construct):
       directory=os.path.join(root_dir,'fdroid-scrape'),
       repository_name='fdroid-scrape')
 
+    ecr.DockerImageAsset(self,'review-result-downloader',
+      directory=os.path.join(root_dir,'review-result-downloader'),
+      repository_name='review-result-downloader')
+
   def add_reviewer(self):
     reviewer = AnalyzerLambda(self,'review-queued-repo',
       project_name='review-queued-repo',
