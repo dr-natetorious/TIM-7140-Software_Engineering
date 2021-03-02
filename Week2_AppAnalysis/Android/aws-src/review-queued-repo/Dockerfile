@@ -35,8 +35,6 @@ RUN pip install \
 # Multi-stage build: grab a fresh copy of the base image
 FROM public.ecr.aws/lambda/python:3.8
 
-RUN yum -y update && yum -y install git
-
 # Include global arg in this stage of the build
 ARG FUNCTION_DIR
 # Set working directory to function root directory

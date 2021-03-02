@@ -4,3 +4,4 @@ aws-cdk.aws_s3
 aws-cdk.aws_lambda
 aws-cdk.aws_lambda_event_sources
 aws-cdk.aws_efs
+aws_cdk.aws_lambda_event_sources

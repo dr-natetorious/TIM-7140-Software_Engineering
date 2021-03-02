@@ -11,46 +11,48 @@ Initialize the function.
 """
 cc = boto3.client('codecommit')
 cg = boto3.client('codeguru-reviewer')
-associations = cache_associations()
 
 def cache_associations() -> dict:
-  nextToken=None
   cache = {}
-  while(True):
+
+  response =cg.list_repository_associations(MaxResults=1000)
+  for item in response['RepositoryAssociationSummaries']:
+    name = item['Name']
+    cache[name] = item
+
+  while('NextToken' in response):
     response = cg.list_repository_associations(
       MaxResults=1000,
-      NextToken=nextToken)
+      NextToken=response['NextToken'])
 
     for item in response['RepositoryAssociationSummaries']:
       name = item['Name']
       cache[name] = item
 
-    nextToken = response['NextToken']
-    if nextToken is None:
-      break
-
   return cache
+
+associations = cache_associations()
 
 def process_event(e:dict):
   repository_name = e['repository_name']
   association = associations[repository_name]
   
   # Find all branches...
-  branches = []
-  nextToken=None
-  while(True):
+  branches=[]
+  response = cc.list_branches(
+    repositoryName=repository_name)
+  branches.extend(response['branches'])
+  
+  while("NextToken" in response):
     response = cc.list_branches(
       repositoryName=repository_name,
-      nextToken = nextToken)
+      nextToken = response['NextToken'])
 
     branches.extend(response['branches'])
-    nextToken = response['nextToken']
-    if nextToken is None:
-      break
 
   # Process each branch...
   for branch in branches:
-    cg.create_code_review(
+    response = cg.create_code_review(
       Name='Analyze',
       RepositoryAssociationArn= association['AssociationArn'],
       Type={
@@ -59,8 +61,7 @@ def process_event(e:dict):
         "BranchName":branch
       })
 
-  
-
+    print(response)
 
 # https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html
 def handle_event(request, context):
