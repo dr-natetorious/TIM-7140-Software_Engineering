@@ -33,5 +33,5 @@ if __name__ == '__main__':
   # Persist the keywords
   keywords = tfidf_vector.get_feature_names()
   with open(path.join(base_path,'./tfidf.json'),'w', encoding='utf8') as f:
-      f.write(dumps(keywords))
+    f.write(dumps(keywords))
 
