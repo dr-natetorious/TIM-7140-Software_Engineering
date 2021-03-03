@@ -77,6 +77,10 @@ class ComputeLayer(core.Construct):
       project_name='fdroid-scrape-repo',
       datalake=datalake)
 
+    AnalyzerLambda(scope,'review-result-sanitizer',
+      project_name='review-result-sanitizer',
+      datalake=datalake)
+
     ecr.DockerImageAsset(self,'fdroid-scrape',
       directory=os.path.join(root_dir,'fdroid-scrape'),
       repository_name='fdroid-scrape')
