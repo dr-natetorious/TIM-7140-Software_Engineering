@@ -55,6 +55,14 @@ class SonarQubeLayer(core.Construct):
         security_groups=[self.security_group],
         instance_type=ec2.InstanceType('r6g.xlarge')))
 
+    efs_data = self.datalake.efs.add_access_point('sonarqube-data',
+      create_acl= efs.Acl(owner_gid="0", owner_uid="0", permissions="777"),
+      path='/sonarqube/data')
+
+    efs_temp = self.datalake.efs.add_access_point('sonarqube-temp',
+      create_acl= efs.Acl(owner_gid="0", owner_uid="0", permissions="777"),
+      path='/sonarqube/temp')
+    
     self.service = ecsp.ApplicationLoadBalancedFargateService(self,'Server',
       assign_public_ip=True,
       vpc=self.datalake.vpc,
@@ -63,14 +71,39 @@ class SonarQubeLayer(core.Construct):
       memory_limit_mib=8*1024,
       listener_port=80,
       platform_version= ecs.FargatePlatformVersion.VERSION1_4,
-      security_groups=[self.security_group],
+      security_groups=[self.security_group, self.datalake.efs_sg ],     
       task_image_options= ecsp.ApplicationLoadBalancedTaskImageOptions(
         image= ecs.ContainerImage.from_docker_image_asset(asset=self.sonarqube_svr_ecr),
         container_name='sonarqube-svr',
         container_port=9000,
         enable_logging=True,
         environment={
-          '_SONAR_JDBC_URL':'jdbc:postgresql://{}/sonarqube'.format(self.database.cluster_endpoint),
+          '_SONAR_JDBC_URL':'jdbc:postgresql://{}/sonarqube'.format(
+              self.database.cluster_endpoint.hostname),
           '_SONAR_JDBC_USERNAME':'postgres',
           '_SONAR_JDBC_PASSWORD':'postgres'
         }))
+    
+    for name in [
+      'AmazonElasticFileSystemClientFullAccess' ]:
+      self.service.task_definition.task_role.add_managed_policy(
+        iam.ManagedPolicy.from_aws_managed_policy_name(name))
+
+    self.service.task_definition.add_volume(
+      name='data',
+      efs_volume_configuration= ecs.EfsVolumeConfiguration(
+        file_system_id= self.datalake.efs.file_system_id,
+        #root_directory='/var/sonarqube/data',
+        transit_encryption= 'ENABLED',
+        authorization_config= ecs.AuthorizationConfig(
+          access_point_id= efs_data.access_point_id,
+          iam='DISABLED')))
+
+    # self.service.task_definition.add_volume(
+    #   name='temp',
+    #   efs_volume_configuration= ecs.EfsVolumeConfiguration(
+    #     file_system_id= self.datalake.efs.file_system_id,
+    #     root_directory='/var/sonarqube/temp'))
+        # transit_encryption= 'ENABLED',
+        # authorization_config= ecs.AuthorizationConfig(
+        #   access_point_id= efs_temp.access_point_id )))
