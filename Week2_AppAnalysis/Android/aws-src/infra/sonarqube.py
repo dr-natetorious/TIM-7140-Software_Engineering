@@ -55,14 +55,6 @@ class SonarQubeLayer(core.Construct):
         security_groups=[self.security_group],
         instance_type=ec2.InstanceType('r6g.xlarge')))
 
-    efs_data = self.datalake.efs.add_access_point('sonarqube-data',
-      create_acl= efs.Acl(owner_gid="0", owner_uid="0", permissions="777"),
-      path='/sonarqube/data')
-
-    efs_temp = self.datalake.efs.add_access_point('sonarqube-temp',
-      create_acl= efs.Acl(owner_gid="0", owner_uid="0", permissions="777"),
-      path='/sonarqube/temp')
-    
     self.service = ecsp.ApplicationLoadBalancedFargateService(self,'Server',
       assign_public_ip=True,
       vpc=self.datalake.vpc,
@@ -89,21 +81,23 @@ class SonarQubeLayer(core.Construct):
       self.service.task_definition.task_role.add_managed_policy(
         iam.ManagedPolicy.from_aws_managed_policy_name(name))
 
-    self.service.task_definition.add_volume(
-      name='data',
-      efs_volume_configuration= ecs.EfsVolumeConfiguration(
-        file_system_id= self.datalake.efs.file_system_id,
-        #root_directory='/var/sonarqube/data',
-        transit_encryption= 'ENABLED',
-        authorization_config= ecs.AuthorizationConfig(
-          access_point_id= efs_data.access_point_id,
-          iam='DISABLED')))
+    # Bind EFS folders
+    container = self.service.task_definition.default_container
+    for folder in ['data','extensions','logs']:
+      efs_ap = self.datalake.efs.add_access_point('sonarqube-'+folder,
+        create_acl= efs.Acl(owner_gid="0", owner_uid="0", permissions="777"),
+        path='/sonarqube/'+folder)
 
-    # self.service.task_definition.add_volume(
-    #   name='temp',
-    #   efs_volume_configuration= ecs.EfsVolumeConfiguration(
-    #     file_system_id= self.datalake.efs.file_system_id,
-    #     root_directory='/var/sonarqube/temp'))
-        # transit_encryption= 'ENABLED',
-        # authorization_config= ecs.AuthorizationConfig(
-        #   access_point_id= efs_temp.access_point_id )))
+      self.service.task_definition.add_volume(
+        name=folder,
+        efs_volume_configuration= ecs.EfsVolumeConfiguration(
+          file_system_id= self.datalake.efs.file_system_id,
+          transit_encryption= 'ENABLED',
+          authorization_config= ecs.AuthorizationConfig(
+            access_point_id= efs_ap.access_point_id,
+            iam='DISABLED')))
+
+      container.add_mount_points(ecs.MountPoint(
+        container_path='/opt/sonarqube/'+folder,
+        source_volume=folder,
+        read_only=False))
