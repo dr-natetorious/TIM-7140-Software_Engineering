@@ -11,6 +11,7 @@ from aws_cdk import (
     aws_iam as iam,
     aws_s3 as s3,
     aws_ec2 as ec2,
+    aws_rds as rds,
     aws_efs as efs
 )
 
@@ -40,6 +41,20 @@ class SonarQubeLayer(core.Construct):
       directory=os.path.join(root_dir, 'images/sonarqube-scanner'),
       repository_name='sonarqube-cli')
 
+    self.database = rds.DatabaseCluster(self,'Database',
+      engine=rds.DatabaseClusterEngine.aurora_postgres(
+        version = rds.AuroraPostgresEngineVersion.VER_11_9
+      ),
+      default_database_name='sonarqube',
+      removal_policy= core.RemovalPolicy.DESTROY,
+      credentials=rds.Credentials.from_username(
+        username='postgres',
+        password=core.SecretValue(value='postgres')),
+      instance_props= rds.InstanceProps(
+        vpc=self.datalake.vpc,
+        security_groups=[self.security_group],
+        instance_type=ec2.InstanceType('r6g.xlarge')))
+
     self.service = ecsp.ApplicationLoadBalancedFargateService(self,'Server',
       assign_public_ip=True,
       vpc=self.datalake.vpc,
@@ -53,4 +68,9 @@ class SonarQubeLayer(core.Construct):
         image= ecs.ContainerImage.from_docker_image_asset(asset=self.sonarqube_svr_ecr),
         container_name='sonarqube-svr',
         container_port=9000,
-        enable_logging=True))
+        enable_logging=True,
+        environment={
+          '_SONAR_JDBC_URL':'jdbc:postgresql://{}/sonarqube'.format(self.database.cluster_endpoint),
+          '_SONAR_JDBC_USERNAME':'postgres',
+          '_SONAR_JDBC_PASSWORD':'postgres'
+        }))
