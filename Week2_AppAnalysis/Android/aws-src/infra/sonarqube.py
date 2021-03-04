@@ -71,7 +71,7 @@ class SonarQubeLayer(core.Construct):
         vpc_subnets= ec2.SubnetSelection(subnet_type= ec2.SubnetType.PUBLIC),
         desired_capacity=1))
 
-    self.alb = ecsp.ApplicationLoadBalancedEc2Service(self,'SonarEc2',
+    self.service = ecsp.ApplicationLoadBalancedEc2Service(self,'SonarEc2',
       cluster=self.ecs_cluster,
       desired_count=1,
       listener_port=80,
@@ -84,30 +84,30 @@ class SonarQubeLayer(core.Construct):
         environment={
           '_SONAR_JDBC_URL':'jdbc:postgresql://{}/sonarqube'.format(
               self.database.cluster_endpoint.hostname),
-          'SONAR_JDBC_USERNAME':'postgres',
-          'SONAR_JDBC_PASSWORD':'postgres'
+          '_SONAR_JDBC_USERNAME':'postgres',
+          '_SONAR_JDBC_PASSWORD':'postgres'
         }))
 
-    self.service = ecsp.ApplicationLoadBalancedFargateService(self,'Server',
-      assign_public_ip=True,
-      vpc=self.datalake.vpc,
-      desired_count=1,
-      cpu=4096,
-      memory_limit_mib=8*1024,
-      listener_port=80,
-      platform_version= ecs.FargatePlatformVersion.VERSION1_4,
-      security_groups=[self.security_group, self.datalake.efs_sg ],     
-      task_image_options= ecsp.ApplicationLoadBalancedTaskImageOptions(
-        image= ecs.ContainerImage.from_docker_image_asset(asset=self.sonarqube_svr_ecr),
-        container_name='sonarqube-svr',
-        container_port=9000,
-        enable_logging=True,
-        environment={
-          '_SONAR_JDBC_URL':'jdbc:postgresql://{}/sonarqube'.format(
-              self.database.cluster_endpoint.hostname),
-          'SONAR_JDBC_USERNAME':'postgres',
-          'SONAR_JDBC_PASSWORD':'postgres'
-        }))
+    # self.service = ecsp.ApplicationLoadBalancedFargateService(self,'Server',
+    #   assign_public_ip=True,
+    #   vpc=self.datalake.vpc,
+    #   desired_count=1,
+    #   cpu=4096,
+    #   memory_limit_mib=8*1024,
+    #   listener_port=80,
+    #   platform_version= ecs.FargatePlatformVersion.VERSION1_4,
+    #   security_groups=[self.security_group, self.datalake.efs_sg ],     
+    #   task_image_options= ecsp.ApplicationLoadBalancedTaskImageOptions(
+    #     image= ecs.ContainerImage.from_docker_image_asset(asset=self.sonarqube_svr_ecr),
+    #     container_name='sonarqube-svr',
+    #     container_port=9000,
+    #     enable_logging=True,
+    #     environment={
+    #       '_SONAR_JDBC_URL':'jdbc:postgresql://{}/sonarqube'.format(
+    #           self.database.cluster_endpoint.hostname),
+    #       'SONAR_JDBC_USERNAME':'postgres',
+    #       'SONAR_JDBC_PASSWORD':'postgres'
+    #     }))
     
     for name in [
       'AmazonElasticFileSystemClientFullAccess' ]:
@@ -118,10 +118,10 @@ class SonarQubeLayer(core.Construct):
     container = self.service.task_definition.default_container
     
     # Required to start remote sql
-    # container.add_ulimits(ecs.Ulimit(
-    #   name=ecs.UlimitName.NOFILE,
-    #   soft_limit=262145,
-    #   hard_limit=262145))
+    container.add_ulimits(ecs.Ulimit(
+      name=ecs.UlimitName.NOFILE,
+      soft_limit=262145,
+      hard_limit=262145))
 
     for folder in ['data','extensions','logs']:
       efs_ap = self.datalake.efs.add_access_point('sonarqube-'+folder,
