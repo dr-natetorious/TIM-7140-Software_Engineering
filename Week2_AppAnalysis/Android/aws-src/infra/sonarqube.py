@@ -71,12 +71,22 @@ class SonarQubeLayer(core.Construct):
         vpc_subnets= ec2.SubnetSelection(subnet_type= ec2.SubnetType.PUBLIC),
         desired_capacity=1))
 
-    # self.alb = ecsp.ApplicationLoadBalancedEc2Service(self,'SonarEc2',
-    #   cluster=self.ecs_cluster,
-    #   desired_count=1,
-    #   task_definition=ecs.TaskDefinition(self,'Task',
-    #     network_mode= ecs.NetworkMode.AWS_VPC,
-    #     compatibility= ecs.Compatibility.EC2_AND_FARGATE))
+    self.alb = ecsp.ApplicationLoadBalancedEc2Service(self,'SonarEc2',
+      cluster=self.ecs_cluster,
+      desired_count=1,
+      listener_port=80,
+      memory_reservation_mib=4 * 1024,
+      task_image_options= ecsp.ApplicationLoadBalancedTaskImageOptions(
+        image= ecs.ContainerImage.from_docker_image_asset(asset=self.sonarqube_svr_ecr),
+        container_name='sonarqube-svr',
+        container_port=9000,
+        enable_logging=True,
+        environment={
+          '_SONAR_JDBC_URL':'jdbc:postgresql://{}/sonarqube'.format(
+              self.database.cluster_endpoint.hostname),
+          'SONAR_JDBC_USERNAME':'postgres',
+          'SONAR_JDBC_PASSWORD':'postgres'
+        }))
 
     self.service = ecsp.ApplicationLoadBalancedFargateService(self,'Server',
       assign_public_ip=True,

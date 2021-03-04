@@ -1,0 +1,21 @@
+docker run -it -e SONAR_JDBC_PASSWORD=postgres -e SONAR_JDBC_URL=jdbc:postgresql://droidanlyz-sonarqubedatabase423e79bf-ye2h5p32a9r3.cluster-chkkaxwez38r.us-east-2.rds.amazonaws.com/sonarqube -e SONAR_JDBC_USERNAME=postgres sonarqube -Dsonar.search.host=vpc-droidan-elasti-5tjrrzh3qcz-w674m7w7iuae4nz7wgr35uoqcm.us-east-2.es.amazonaws.com
+
+--ulimit nofile=65536:65536
+
+sonar.jdbc.username=postgres
+sonar.jdbc.password=postgres
+sonar.jdbc.url=jdbc:postgresql://localhost/sonarqube?currentSchema=my_schema
+
+https://www.elastic.co/guide/en/elasticsearch/reference/6.8/allocation-awareness.html
+
+./bin/elasticsearch -Enode.attr.rack_id=rack_one
+
+
+docker run -it --ulimit nofile=65536:65536 sonarqube -Dsonar.jdbc.username=postgres -Dsonar.jdbc.password=postgres -Dsonar.jdbc.url=jdbc:postgresql://droidanlyz-sonarqubedatabase423e79bf-ye2h5p32a9r3.cluster-chkkaxwez38r.us-east-2.rds.amazonaws.com/sonarqube -Dsonar.search.host=vpc-droidan-elasti-5tjrrzh3qcz-w674m7w7iuae4nz7wgr35uoqcm.us-east-2.es.amazonaws.com
+
+
+root@ip-10-0-128-77 /]# curl https://vpc-droidan-elasti-5tjrrzh3qcz-w674m7w7iuae4nz7wgr35uoqcm.us-east-2.es.amazonaws.com/_cluster/settings
+{"persistent":{"cluster":{"routing":{"allocation":{"cluster_concurrent_rebalance":"2","node_concurrent_recoveries":"2","disk":{"watermark":{"low":"1.35gb","flood_stage":"0.45gb","high":"0.9gb"}},"node_initial_primaries_recoveries":"4"}}},"indices":{"recovery":{"max_bytes_per_sec":"60mb"}}},"transient":{"cluster":{"routing":{"allocation":{"cluster_concurrent_rebalance":"2","node_concurrent_recoveries":"2","disk":{"watermark":{"low":"1.35gb","flood_stage":"0.45gb","high":"0.9gb"}},"exclude":{},"node_initial_primaries_recoveries":"4","awareness":{}}}},"indices":{"recovery":{"max_bytes_per_sec":"60mb"}}}}
+
+temp/conf/es/elasticsearch.yml:cluster.routing.allocation.awareness.attributes: rack_id
+temp/conf/es/elasticsearch.yml:node.attr.rack_id: sonarqube
