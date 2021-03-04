@@ -33,6 +33,11 @@ class SonarQubeLayer(core.Construct):
       allow_all_outbound=True,
       description='SonarQube Security Group')
 
+    self.security_group.add_ingress_rule(
+      peer=ec2.Peer.any_ipv4(),
+      connection=ec2.Port.all_traffic(),
+      description='Allow any traffic')
+
     self.sonarqube_svr_ecr = ecr.DockerImageAsset(self,'Repo',
       directory=os.path.join(root_dir, 'images/sonarqube-server'),
       repository_name='sonarqube')
