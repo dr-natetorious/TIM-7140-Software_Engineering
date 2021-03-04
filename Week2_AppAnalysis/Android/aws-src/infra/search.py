@@ -45,7 +45,7 @@ class ElasticSearchLayer(core.Construct):
         enforce_https=True,
         node_to_node_encryption=True,
         capacity= es.CapacityConfig(
-          #master_nodes=3,
+          master_nodes=3,
           #warm_nodes=len(self.vpc.availability_zones),
           data_nodes= 2 # len(self.vpc.availability_zones),              
         ),

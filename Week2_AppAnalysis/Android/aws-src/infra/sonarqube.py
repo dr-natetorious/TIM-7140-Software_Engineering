@@ -60,6 +60,24 @@ class SonarQubeLayer(core.Construct):
         security_groups=[self.security_group],
         instance_type=ec2.InstanceType('r6g.xlarge')))
 
+    self.ecs_cluster = ecs.Cluster(self,'SonarCluster',
+      container_insights=True,
+      vpc=self.datalake.vpc,
+      capacity=ecs.AddCapacityOptions(
+        machine_image_type= ecs.MachineImageType.AMAZON_LINUX_2,
+        instance_type=ec2.InstanceType('m5.xlarge'),
+        allow_all_outbound=True,
+        associate_public_ip_address=True,
+        vpc_subnets= ec2.SubnetSelection(subnet_type= ec2.SubnetType.PUBLIC),
+        desired_capacity=1))
+
+    # self.alb = ecsp.ApplicationLoadBalancedEc2Service(self,'SonarEc2',
+    #   cluster=self.ecs_cluster,
+    #   desired_count=1,
+    #   task_definition=ecs.TaskDefinition(self,'Task',
+    #     network_mode= ecs.NetworkMode.AWS_VPC,
+    #     compatibility= ecs.Compatibility.EC2_AND_FARGATE))
+
     self.service = ecsp.ApplicationLoadBalancedFargateService(self,'Server',
       assign_public_ip=True,
       vpc=self.datalake.vpc,
@@ -77,8 +95,8 @@ class SonarQubeLayer(core.Construct):
         environment={
           '_SONAR_JDBC_URL':'jdbc:postgresql://{}/sonarqube'.format(
               self.database.cluster_endpoint.hostname),
-          '_SONAR_JDBC_USERNAME':'postgres',
-          '_SONAR_JDBC_PASSWORD':'postgres'
+          'SONAR_JDBC_USERNAME':'postgres',
+          'SONAR_JDBC_PASSWORD':'postgres'
         }))
     
     for name in [
@@ -86,8 +104,15 @@ class SonarQubeLayer(core.Construct):
       self.service.task_definition.task_role.add_managed_policy(
         iam.ManagedPolicy.from_aws_managed_policy_name(name))
 
-    # Bind EFS folders
+    # Override container specific settings
     container = self.service.task_definition.default_container
+    
+    # Required to start remote sql
+    # container.add_ulimits(ecs.Ulimit(
+    #   name=ecs.UlimitName.NOFILE,
+    #   soft_limit=262145,
+    #   hard_limit=262145))
+
     for folder in ['data','extensions','logs']:
       efs_ap = self.datalake.efs.add_access_point('sonarqube-'+folder,
         create_acl= efs.Acl(owner_gid="0", owner_uid="0", permissions="777"),
