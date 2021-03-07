@@ -4,6 +4,15 @@
 
 Daniel E. Krutz, Mehdi Mirakhorli, Samuel A. Malachowsky, Andres Ruiz, Jacob Peterson, Andrew Filipski, and Jared Smith. 2015. A dataset of open-source Android applications. In Proceedings of the 12th Working Conference on Mining Software Repositories (MSR '15). IEEE Press, 522–525. [DOI](https://dl-acm-org.proxy1.ncu.edu/doi/10.5555/2820518.2820603). [Android-DataSet.pdf](Android-DataSet.pdf).
 
+|Tool|Description|
+|----|---------|
+|Stowaway| Static analysis tool for finding under/over permissions|
+|Androrisk| Androguard reverse engineering tool.  Calculates risk indicators of an app|
+|Sonar| Source code analyzer covering 7 axes of code quality (architecture and design, comments, coding rules, potential bugs, complexity, unit tests, and duplications)|
+|FindBugs | Static analysis tool for finding Java issues
+|Checkstyle| Java source analysis tool|
+|PMD| Identifies maintainability risks within a codebase|
+
 ## Empirical investigation of socio-technical code review metrics (2014)
 
 Andrew Meneely, Alberto C. Rodriguez Tejeda, Brian Spates, Shannon Trudeau, Danielle Neuberger, Katherine Whitlock, Christopher Ketant, and Kayla Davis. 2014. An empirical investigation of socio-technical code review metrics and security vulnerabilities. In Proceedings of the 6th International Workshop on Social Software Engineering (SSE 2014). Association for Computing Machinery, New York, NY, USA, 37–44. [DOI](https://doi.org/10.1145/2661685.2661687). [SocioTechnicalMetrics.pdf](SocioTechnicalMetrics.pdf).
