@@ -60,22 +60,43 @@ class SonarQubeLayer(core.Construct):
         security_groups=[self.security_group],
         instance_type=ec2.InstanceType('r6g.xlarge')))
 
-    self.ecs_cluster = ecs.Cluster(self,'SonarCluster',
-      container_insights=True,
-      vpc=self.datalake.vpc,
-      capacity=ecs.AddCapacityOptions(
-        machine_image_type= ecs.MachineImageType.AMAZON_LINUX_2,
-        instance_type=ec2.InstanceType('m5.xlarge'),
-        allow_all_outbound=True,
-        associate_public_ip_address=True,
-        vpc_subnets= ec2.SubnetSelection(subnet_type= ec2.SubnetType.PUBLIC),
-        desired_capacity=1))
+    # self.ecs_cluster = ecs.Cluster(self,'SonarCluster',
+    #   container_insights=True,
+    #   vpc=self.datalake.vpc,
+    #   capacity=ecs.AddCapacityOptions(
+    #     machine_image_type= ecs.MachineImageType.AMAZON_LINUX_2,
+    #     instance_type=ec2.InstanceType('m5.xlarge'),
+    #     allow_all_outbound=True,
+    #     associate_public_ip_address=False,
+    #     vpc_subnets= ec2.SubnetSelection(subnet_type= ec2.SubnetType.PUBLIC),
+    #     desired_capacity=2))
 
-    self.service = ecsp.ApplicationLoadBalancedEc2Service(self,'SonarEc2',
-      cluster=self.ecs_cluster,
+    # self.service = ecsp.ApplicationLoadBalancedEc2Service(self,'SonarEc2',
+    #   cluster=self.ecs_cluster,
+    #   desired_count=1,
+    #   listener_port=80,
+    #   memory_reservation_mib= 4 * 1024,
+    #   task_image_options= ecsp.ApplicationLoadBalancedTaskImageOptions(
+    #     image= ecs.ContainerImage.from_docker_image_asset(asset=self.sonarqube_svr_ecr),
+    #     container_name='sonarqube-svr',
+    #     container_port=9000,
+    #     enable_logging=True,
+    #     environment={
+    #       '_SONAR_JDBC_URL':'jdbc:postgresql://{}/sonarqube'.format(
+    #           self.database.cluster_endpoint.hostname),
+    #       '_SONAR_JDBC_USERNAME':'postgres',
+    #       '_SONAR_JDBC_PASSWORD':'postgres'
+    #     }))
+
+    self.service = ecsp.ApplicationLoadBalancedFargateService(self,'Server',
+      assign_public_ip=True,
+      vpc=self.datalake.vpc,
       desired_count=1,
+      cpu=4096,
+      memory_limit_mib=8*1024,
       listener_port=80,
-      memory_reservation_mib=4 * 1024,
+      platform_version= ecs.FargatePlatformVersion.VERSION1_4,
+      security_groups=[self.security_group, self.datalake.efs_sg ],     
       task_image_options= ecsp.ApplicationLoadBalancedTaskImageOptions(
         image= ecs.ContainerImage.from_docker_image_asset(asset=self.sonarqube_svr_ecr),
         container_name='sonarqube-svr',
@@ -87,27 +108,6 @@ class SonarQubeLayer(core.Construct):
           '_SONAR_JDBC_USERNAME':'postgres',
           '_SONAR_JDBC_PASSWORD':'postgres'
         }))
-
-    # self.service = ecsp.ApplicationLoadBalancedFargateService(self,'Server',
-    #   assign_public_ip=True,
-    #   vpc=self.datalake.vpc,
-    #   desired_count=1,
-    #   cpu=4096,
-    #   memory_limit_mib=8*1024,
-    #   listener_port=80,
-    #   platform_version= ecs.FargatePlatformVersion.VERSION1_4,
-    #   security_groups=[self.security_group, self.datalake.efs_sg ],     
-    #   task_image_options= ecsp.ApplicationLoadBalancedTaskImageOptions(
-    #     image= ecs.ContainerImage.from_docker_image_asset(asset=self.sonarqube_svr_ecr),
-    #     container_name='sonarqube-svr',
-    #     container_port=9000,
-    #     enable_logging=True,
-    #     environment={
-    #       '_SONAR_JDBC_URL':'jdbc:postgresql://{}/sonarqube'.format(
-    #           self.database.cluster_endpoint.hostname),
-    #       'SONAR_JDBC_USERNAME':'postgres',
-    #       'SONAR_JDBC_PASSWORD':'postgres'
-    #     }))
     
     for name in [
       'AmazonElasticFileSystemClientFullAccess' ]:
@@ -123,7 +123,7 @@ class SonarQubeLayer(core.Construct):
       soft_limit=262145,
       hard_limit=262145))
 
-    for folder in ['data','extensions','logs']:
+    for folder in ['data','logs']:
       efs_ap = self.datalake.efs.add_access_point('sonarqube-'+folder,
         create_acl= efs.Acl(owner_gid="0", owner_uid="0", permissions="777"),
         path='/sonarqube/'+folder)

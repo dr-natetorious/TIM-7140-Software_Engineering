@@ -6,12 +6,12 @@ def create_layers(scope):
   
   storage = DataLakeLayer(scope,'StorageLayer')
   compute = ComputeLayer(scope,'Compute',datalake=storage)
-  search = ElasticSearchLayer(scope,'Elastic',datalake=storage)
+  #search = ElasticSearchLayer(scope,'Elastic',datalake=storage)
   sonar = SonarQubeLayer(scope,'SonarQube', datalake=storage)
 
   return [
     storage,
     compute,
-    search,
+   # search,
     sonar
   ]
