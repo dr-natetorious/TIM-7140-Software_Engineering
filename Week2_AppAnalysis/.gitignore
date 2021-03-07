@@ -1,0 +1,2 @@
+# ignore open excel documents
+~*.xlsx
