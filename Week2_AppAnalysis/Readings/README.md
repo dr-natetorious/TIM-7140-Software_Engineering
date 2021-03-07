@@ -29,6 +29,20 @@ Emitza Guzman, David Azócar, and Yang Li. 2014. Sentiment analysis of commit co
 
 Le An and Foutse Khomh. 2015. An Empirical Study of Crash-inducing Commits in Mozilla Firefox. In Proceedings of the 11th International Conference on Predictive Models and Data Analytics in Software Engineering (PROMISE '15). Association for Computing Machinery, New York, NY, USA, Article 5, 1–10. [DOI](https://doi.org/10.1145/2810146.2810152). [FirefoxCrashes.pdf](FirefoxCrashes.pdf).
 
+**RQ1: What is the proportion of crash-inducing commits in Firefox?**
+
+We analyse Firefox’ crash reports and link them to the corresponding crash-related bugs. We then use the SZZ algorithm [32] to map these bugs to their related commits and identify the commits due to which the crash-related bugs occurred. We found that crash-inducing commits account for 25.5% in the studied version control system.
+
+**RQ2: What characteristics do crash-inducing commits possess?**
+
+By investigating the characteristics of crash-inducing commits and other commits, we found that, in general, crash-inducing commits are submitted by developers with less experience and are more often committed by developers from Mozilla. Developers change more files, add and delete more lines in crash-inducing commits Compared to other commits, more crashinducing commits fix a previous bug, and often, they lead to another bug. In terms of changed types, crash-inducing commits contain more unique changed types and the changed statements tend to  be scattered in more changed types, while other commits tend to be changed on a specific changed type.
+
+**RQ3: How well can we predict crash-inducing commits?**
+
+Previous studies, which proposed statistical models to predict defects from bug reports, could be effective to some extent. However, before a certain type of crashes is filed into the crash collecting system, a large number of end users might have already suffered a negative experience. Moreover, during this period, developers may become less familiar with the code. In this case, they may spend more time identifying the erroneous lines to fix the problems. Therefore, statistical models that can predict error-prone code just-in-time are required to help software practitioners detect crash-inducing commits and effectively fix them early. We use GLM, Naive Bayes, C5.0, and Random Forest algorithms to predict whether or not a commit will induce future crashes. Our predictive models can reach a precision of 61.4% and a recall of 95.0%. Software organisations can apply our proposed technique to improve their defect triaging process and the satisfaction of their users.
+
+![firefox_pipeline.png](firefox_pipeline.png)
+
 ## Characterizing Verification of Bug Fixes (2012)
 
 Souza, R., & Chavez, C. (2012). Characterizing Veriﬁcation of Bug Fixes in Two Open Source IDEs @ MSR 2012. [YouTube](https://youtu.be/_jaJlvyLoTk).
