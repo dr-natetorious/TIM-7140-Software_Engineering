@@ -1,0 +1,4 @@
+requests
+boto3
+bs4
+aws-xray-sdk
