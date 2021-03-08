@@ -47,9 +47,6 @@ left join (
         group by appid ) as max_v
         on up.appid=max_v.appid and up.versionid=max_v.versionid) as overp
             on app.appid = overp.appid
-                                
-
-
 
 select appdata.categories, count(distinct appdata.appid) as apps, sum(perms_set.over_permission_count) as over_count, sum(perms_set.under_permission_count) as under_count
 --select perms_set.*
@@ -103,6 +100,52 @@ order by appid, versionid
 /*
 Is there is a correlation between the number of committers an app has, and its permission misuse?
 */
+
+create view latest_over_permission
+as
+select app.categories, up.* 
+from over_permissions as up
+inner join AppData as app on up.appid=app.appid
+inner join (
+    select appid, max(versionid) as versionid 
+    from over_permissions
+    group by appid ) as max_v
+on up.appid=max_v.appid and up.versionid=max_v.versionid
+
+create view app_committers as
+select app.appId, app.categories, count(distinct git.email) as devs, count(*) as commits
+from AppData as app
+join GitHistory as git on app.appId = git.appId
+group by app.appId, app.categories
+
+select app.appId, app.categories, 
+    git.email, count(distinct commit_hash) as commits, 
+    c.devs as team_size, c.commits as total_changes, 
+    p.over_permissions, p.over_permission_count 
+from AppData as app
+inner join GitHistory as git on app.appId = git.appId
+inner join app_committers as c on c.appid=app.appid
+inner join latest_over_permission p on p.appid =app.appid
+group by app.appId, app.categories, git.email
+
+// final query
+select app.appId, app.categories, 
+    --git.email, count(distinct commit_hash) as commits, 
+    c.devs as team_size, c.commits as total_changes, 
+    p.over_permissions, coalesce(p.over_permission_count,0) as overages
+from AppData as app
+--inner join GitHistory as git on app.appId = git.appId
+inner join app_committers as c on c.appid=app.appid
+left join latest_over_permission p on p.appid =app.appid
+group by app.appId, app.categories--, git.email
+
+
+select app.appId, app.categories, git.email, count(distinct commit_hash) as commits, c.devs as team_size, c.commits as total_changes
+from AppData as app
+join GitHistory as git on app.appId = git.appId
+left join app_committers as c on c.appid=app.appid
+group by app.appId, app.categories, git.email
+
 
 // This query is by users
 select app.appId, app.categories, git.email, count(distinct commit_hash) as commits
@@ -194,3 +237,19 @@ left outer join Vulnerability vuln on ver.versionId = vuln.versionId
 -- Find sonar results
 left outer join CodingStandard code on ver.versionId = code.VersionId
 order by appdata.appid, ver.versionID
+
+/*
+Propse a new question 
+*/
+select max_v.*, app.categories, trim(p.name) as name
+from OverPermission op
+inner join Permission p on op.PermissionId = p.PermissionId
+inner join (
+    select appid, max(versionid) as versionid
+    from Version
+    group by appid) as max_v
+        on  op.versionid = max_v.versionid
+inner join appdata as app
+    on app.appid=max_v.appid
+where categories in ('Games','Internet','Multimedia','Office','System')
+
