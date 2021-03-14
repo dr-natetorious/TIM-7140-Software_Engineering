@@ -4,12 +4,13 @@
 
 Your next task will be to design the collection and analysis process you would use to perform this study. You will not be asked to implement this study. Some points you should address in your design include:
 
-Define the process to collect this data. Your collection process must be clearly defined and architected.
-What do you hope to discover from this dataset? What software engineering issues will you solve?
-Why is this dataset needed? Explain why this dataset would be useful.
-How will it be constructed. What technologies would you be using?
-What challenges must be overcome in the creation of this dataset?
-Provide a brief literature review of similar studies.
+- Define the process to collect this data. Your collection process must be clearly defined and architected.
+- What do you hope to discover from this dataset? What software engineering issues will you solve?
+- Why is this dataset needed? Explain why this dataset would be useful.
+- How will it be constructed. What technologies would you be using?
+- What challenges must be overcome in the creation of this dataset?
+- Provide a brief literature review of similar studies.
+
 This design and rationale should provide the reader confidence that your proposed empirical analysis provides significant value from a research perspective, and that your plan could be reasonably implemented.
 
 Length: 6-8 pages, not including title page and references
