@@ -1,0 +1,7 @@
+# Propose and Design a Dataset for Empirical Analysis
+
+Last week, you performed an empirical analysis on an existing data set. This week, you will propose the creation of your own dataset to empirically analyze.  Although you are expected to create the foundation for future empirical research, you are not expected to create your entire dataset in this activity.
+
+The creation of quality datasets is of paramount importance for a variety of reasons, have numerous possible applications. For example, a high quality data set may not only be useful to the group developing the dataset, but could also be made public, thus assisting many other researchers. When publishing a public dataset, extra attention should be paid to make sure that the information is clearly laid out, and there is as little ambiguity as possible. When sharing a relational database, table names should be clearly defined, and schemas should be provided. A good example for existing public data sets, and what is expected from a publication perspective is to analyze data track papers in the Mining Software Repositories (MSR) conference. Public datasets are frequently very diverse and have been created to assist in everything from identifying code clones, to sharing valuable information about mobile malware.
+
+Be sure to review this week's resources carefully. You are expected to apply the information from these resources when you prepare your assignments.
