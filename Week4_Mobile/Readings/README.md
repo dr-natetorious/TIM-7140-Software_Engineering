@@ -14,8 +14,8 @@ Joorabchi, M. E., Mesbah, A., & Kruchten, P. (2013). Real Challenges in Mobile A
 
 ## Suitability and Contribution of Agile Methods in Mobile Software Development (2014)
 
-Khalid, A. A. (2014). Suitability and contribution of agile methods in mobile software development. I.J. Modern Education and Computer Science, 2014, 2, 56-62. [DOI](https://doi-org.proxy1.ncu.edu/10.5815/ijmecs.2014.02.08). [AgileMethods.pdf](AgileMethods.pdf).
+Khalid, A;Zahra, S; Khan, M (2014). Suitability and contribution of agile methods in mobile software development. I.J. Modern Education and Computer Science, 2014, 2, 56-62. [DOI](https://doi-org.proxy1.ncu.edu/10.5815/ijmecs.2014.02.08). [AgileMethods.pdf](AgileMethods.pdf).
 
 ## Reducing smartphone application delay through read/write isolation (2015)
 
-MobiSys. (2015). Reducing smartphone application delay through read/write isolation. Association for Computing Machinery. ACM MobiSys 2015. Session 6: Understanding and Improving Mobile App Capabilities.  Wednesday, May 20. [YouTube](https://youtu.be/pYhssJACORg).
+Nguyen, D. (2015). Reducing smartphone application delay through read/write isolation. Association for Computing Machinery. ACM MobiSys 2015. Session 6: Understanding and Improving Mobile App Capabilities.  Wednesday, May 20. Florence, Italy. [YouTube](https://youtu.be/pYhssJACORg).
