@@ -1,0 +1,15 @@
+# https://sequencediagram.org/
+title Reliable Message Passing
+
+Alice->Bob:Post Request
+Bob->Durable Store:Try Persist Request
+Bob<--Durable Store:Error: Internal Error
+Alice<--Bob:Internal Error
+Alice->Bob:Client Retry
+Bob->Durable Store:Try Persist Request
+Bob<--Durable Store: Success:\nHandoff Complete
+Alice<--Bob:Handoff Complete
+Bob->Charlie:Post Request
+Charlie->Charlie:Repeats\nPersist\nPattern
+Bob<--Charlie:Success:\nHandoff Complete
+Bob->Durable Store:Release Message
