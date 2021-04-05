@@ -1,0 +1,7 @@
+# Software Architecture and Design
+
+Designing software is a difficult, but impetrative step of any software process. Improperly designed software may lead to numerous quality, security, maintenance-related, and functional issues. For a variety of reasons, properly designing software is often one of the more difficult and intricate activities undertaken during software development. Applications are often built on designs which were created years earlier, and with different project requirements. Designs must be extensible and allow for change, but not over-architectured or over engineered, which can lead to waste and inefficient software development practices. Proper software architecture and design is also of paramount importance since software defects or missed requirements are often traced back to design mistakes that were made years earlier.
+
+This week, you will evaluate several key challenges and emerging concerns for software architecture and design. Furthermore, you will review several recent works that discuss the concepts of `Architectural Tactics`, which are the building blocks of architectural design. Finally, you will conduct a critical review on each of the scholarly works to identify their strengths, weaknesses, and areas of future research.
+
+Be sure to review this week's resources carefully. You are expected to apply the information from these resources when you prepare your assignments.
