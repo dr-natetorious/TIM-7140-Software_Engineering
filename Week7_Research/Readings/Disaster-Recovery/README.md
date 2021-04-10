@@ -24,7 +24,7 @@ A. A. Tamimi, R. Dawood and L. Sadaqa, "Disaster Recovery Techniques in Cloud Co
 
 ## Leveraging disaster recovery as a cloud migration path (2019)
 
-Jasgur, C. (2019). Leveraging disaster recovery in the cloud as a cloud migration path: A case study. Journal of Business Continuity & Emergency Planning, 13(2), 150–159. [EBSCO]( https://search-ebscohost-com.proxy1.ncu.edu/login.aspx?direct=true&db=tsh&AN=139908027&site=eds-live). [DR_as_MigrationPath.pdf](DR_as_MigrationPath.pdf).
+Jasgur, C. (2019). Leveraging disaster recovery in the cloud as a cloud migration path: A case study. Journal of Business Continuity & Emergency Planning, 13(2), 150–159. [EBSCO](https://search-ebscohost-com.proxy1.ncu.edu/login.aspx?direct=true&db=tsh&AN=139908027&site=eds-live). [DR_as_MigrationPath.pdf](DR_as_MigrationPath.pdf).
 
 > Disaster recovery focuses on the information or technology systems that support business functions, as opposed to business continuity which involves planning for keeping all aspects of a business functioning in the midst of disruptive events. Disaster recovery is a subset of business continuity. Disaster recovery is now normally only used in reference to an organisation’s information technology and telecommunications recovery
 
